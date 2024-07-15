@@ -2,7 +2,7 @@ local pendingCallbacks = {}
 local cbEvent = '__ox_cb_%s'
 local callbackTimeout = GetConvarInt('ox:callbackTimeout', 300000)
 
-RegisterNetEvent(cbEvent:format(cache.resource), function(key, ...)
+Events.RegisterNet(cbEvent:format(cache.resource), function(_, key, ...)
     local cb = pendingCallbacks[key]
     pendingCallbacks[key] = nil
 
@@ -24,7 +24,7 @@ local function triggerClientCallback(_, event, playerId, cb, ...)
         key = ('%s:%s:%s'):format(event, math.random(0, 100000), playerId)
     until not pendingCallbacks[key]
 
-    TriggerClientEvent(cbEvent:format(event), playerId, cache.resource, key, ...)
+    Events.TriggerNet(cbEvent:format(event), playerId, cache.resource, key, ...)
 
     ---@type promise | false
     local promise = not cb and promise.new()
@@ -92,8 +92,13 @@ local pcall = pcall
 ---Registers an event handler and callback function to respond to client requests.
 ---@diagnostic disable-next-line: duplicate-set-field
 function lib.callback.register(name, cb)
-    RegisterNetEvent(cbEvent:format(name), function(resource, key, ...)
-        TriggerClientEvent(cbEvent:format(resource), source, key, callbackResponse(pcall(cb, source, ...)))
+    Events.RegisterNet(cbEvent:format(name), function(ply_obj, resource, key, ...)
+        if (not ply_obj) then
+            return;
+        end
+
+        local ply_src = ply_obj["source"];
+        Events.TriggerNet(cbEvent:format(resource), ply_src, key, callbackResponse(pcall(cb, ply_src, ...)))
     end)
 end
 

@@ -3,7 +3,7 @@ local timers = {}
 local cbEvent = '__ox_cb_%s'
 local callbackTimeout = GetConvarInt('ox:callbackTimeout', 300000)
 
-RegisterNetEvent(cbEvent:format(cache.resource), function(key, ...)
+Events.RegisterNet(cbEvent:format(cache.resource), function(key, ...)
     local cb = pendingCallbacks[key]
     pendingCallbacks[key] = nil
 
@@ -41,7 +41,7 @@ local function triggerServerCallback(_, event, delay, cb, ...)
         key = ('%s:%s'):format(event, math.random(0, 100000))
     until not pendingCallbacks[key]
 
-    TriggerServerEvent(cbEvent:format(event), cache.resource, key, ...)
+    Events.TriggerNet(cbEvent:format(event), cache.resource, key, ...)
 
     ---@type promise | false
     local promise = not cb and promise.new()
@@ -109,8 +109,8 @@ local pcall = pcall
 ---Registers an event handler and callback function to respond to server requests.
 ---@diagnostic disable-next-line: duplicate-set-field
 function lib.callback.register(name, cb)
-    RegisterNetEvent(cbEvent:format(name), function(resource, key, ...)
-        TriggerServerEvent(cbEvent:format(resource), key, callbackResponse(pcall(cb, ...)))
+    Events.RegisterNet(cbEvent:format(name), function(resource, key, ...)
+        Events.TriggerNet(cbEvent:format(resource), key, callbackResponse(pcall(cb, ...)))
     end)
 end
 
